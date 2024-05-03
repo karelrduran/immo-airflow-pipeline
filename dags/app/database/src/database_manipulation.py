@@ -1,3 +1,5 @@
+from typing import Tuple
+
 import psycopg2
 import json
 
@@ -37,10 +39,12 @@ class DBManipulation:
         cur.execute(f"""
             CREATE TABLE IF NOT EXISTS {tbname} (
                 id INTEGER PRIMARY KEY,
-                datos JSONB
+                data JSONB
             )
         """)
+        conn.commit()
 
+        cur.execute(f"CREATE INDEX IF NOT EXISTS idx_id ON {tbname} (id)")
         conn.commit()
 
         cur.close()
@@ -50,7 +54,7 @@ class DBManipulation:
         conn = psycopg2.connect(dbname=self.dbname, user=self.user, password=self.password, host=self.host)
         cur = conn.cursor()
 
-        cur.execute(f"INSERT INTO {self.tbname} (id, datos) VALUES ({id}, '{json.dumps(data)}')")
+        cur.execute("INSERT INTO property (id, data) VALUES (%s, %s)", (id, json.dumps(data),))
 
         conn.commit()
 
@@ -61,29 +65,27 @@ class DBManipulation:
         conn = psycopg2.connect(dbname=self.dbname, user=self.user, password=self.password, host=self.host)
         cur = conn.cursor()
 
-        cur.execute(f"""
-            UPDATE {self.tbname}
-            SET datos = '{json.dumps(data)}'
-            WHERE id = {id}
-        """)
+        cur.execute("""
+                    UPDATE property
+                    SET data = %s
+                    WHERE id = %s
+                """, (json.dumps(data), id,))
 
         conn.commit()
 
         cur.close()
         conn.close()
 
+    def select_property_by_id(self, id: int) -> Tuple[bool, str]:
+        conn = psycopg2.connect(dbname=self.dbname, user=self.user, password=self.password, host=self.host)
+        curr = conn.cursor()
 
-dbm = DBManipulation(
-    dbname="properties_raw_data",
-    user="karel",
-    password="karel123",
-    host="localhost",
-    tbname="property"
-)
+        curr.execute("SELECT * FROM property WHERE id = %s", (id,))
 
-# dbm.insert(1, {"nombre": "Sabrina", "edad": 8, "ciudad": "Gent"})
-dbm.update(1, {
-    "nombre": "karel",
-    "edad": 39,
-    "ciudad": "Gent"
-})
+        data = curr.fetchall()
+
+        if not data:
+            return False, data
+
+        # print(f"Data: {data}")
+        return True, json.dumps(data)

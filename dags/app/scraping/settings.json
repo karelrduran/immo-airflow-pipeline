@@ -1,0 +1,11 @@
+{
+  "POSTGRES_DB_CONNECTION":{
+    "dbname": "properties_raw_data",
+    "user": "karel",
+    "password": "karel123",
+    "host": "localhost",
+    "tbname": "property"
+  },
+  "LAST_UPDATE": "2024-04-29T13:00:07.270+0000",
+  "MAX_PAGES": 1
+}

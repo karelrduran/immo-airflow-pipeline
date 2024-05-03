@@ -3,10 +3,11 @@ from concurrent.futures import ThreadPoolExecutor
 import concurrent.futures
 import json
 import re
+from datetime import datetime
 from typing import Dict, Optional
 
 from bs4 import BeautifulSoup
-from .data_manipulation import DataManipulation
+
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 
@@ -19,7 +20,7 @@ class DataCollector:
     session (Session): A session object for making HTTP requests.
     """
 
-    def __init__(self, last_update: str):
+    def __init__(self, last_update: datetime):
         """
         Initializes DataCollector with a session object.
         """
@@ -68,7 +69,7 @@ class DataCollector:
         Returns:
         list: A list of property URLs.
         """
-        # self.pages = pages
+
         all_urls = []
         with ThreadPoolExecutor() as executor:
             futures = [
@@ -99,9 +100,6 @@ class DataCollector:
             )
             match = re.search(regex, html_content)
 
-            # print(match.group(2)[:-1])
-            # print(json.loads(match.group(2)[:-1]))
-
             result = json.loads(match.group(2)[:-1])
 
             data = {
@@ -116,85 +114,3 @@ class DataCollector:
 
         except Exception as e:
             return None
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    def check_existant(self, id: str):
-        """
-        Checks if a property ID exists in the data.
-
-        Args:
-        id (str): The ID to check.
-
-        Returns:
-        bool: True if the ID exists, False otherwise.
-        """
-        with open(os.path.join("data", "data.json"), "r", encoding="utf-8") as file:
-            if str(id) in file.read():
-                return True
-        return False
-
-    def estate_check(self, data: dict):
-        """
-        Checks if the property is a new real estate project or not.
-
-        Args:
-        data (dict): The data of the property.
-
-        """
-
-        # self.data = data
-        cluster = data.get("cluster")
-        if cluster is None:
-            # if self.check_existant(data.get("id")) == False:
-            DataManipulation().get_data(data)
-        else:
-            unitlist = []
-            units = data.get("cluster").get("units")[0].get("items")
-            for item in units:
-                salestatus = DataManipulation().safeget(item, ["saleStatus"])
-                if salestatus == "AVAILABLE":
-                    locality = DataManipulation().safeget(
-                        data, ["cluster", "units", "items", "locality"], default=None
-                    )
-                    postalcode = DataManipulation().safeget(
-                        data, ["property", "location", "postalCode"], default=None
-                    )
-                    id = item.get("id")
-                    housetype = DataManipulation().safeget(
-                        item, ["subtype"], default=None
-                    )
-                    baseurl = f"https://www.immoweb.be/en/classified/{housetype}/for-sale/{locality}/{postalcode}/{id}"
-                    unitlist.append(baseurl)
-            for unit in unitlist:
-                rawdata = self.get_data_from_html(unit)
-                if self.check_existant(rawdata.get("id")) == False:
-                    DataManipulation().get_data(rawdata)

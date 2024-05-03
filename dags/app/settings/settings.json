@@ -1,0 +1,11 @@
+{
+    "POSTGRES_DB_CONNECTION": {
+        "dbname": "properties_raw_data",
+        "user": "airflow",
+        "password": "airflow",
+        "host": "localhost",
+        "tbname": "property"
+    },
+    "LAST_UPDATE": "2024-05-02T18:40:02.700000+0000",
+    "MAX_PAGES": 1
+}
